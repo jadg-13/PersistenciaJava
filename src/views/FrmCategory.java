@@ -1,7 +1,14 @@
 package views;
 
 import controllers.DaoCategory;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
+import javax.swing.RowFilter;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import models.Category;
 
 /**
  *
@@ -10,15 +17,53 @@ import javax.swing.JOptionPane;
 public class FrmCategory extends javax.swing.JInternalFrame {
 
     private DaoCategory daoCategory = new DaoCategory();
+    private Category category;
+    private ArrayList<Category> list = new ArrayList<>();
+    /*Filtro de datos de la tabla*/
+    private TableRowSorter trsFilter;
     private int idCategory = 1;
+
+    private void fillArrayList() {
+        if (!list.isEmpty()) {
+            list.clear();
+        }
+        list = daoCategory.getAllCategories();
+    }
+
+    private void fillTable() {
+        fillArrayList();
+        DefaultTableModel dtm = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        String titles[] = {"CODIGO", "CATEGORIAS"};
+        dtm.setColumnIdentifiers(titles);
+        for (Category category : list) {
+
+            Object row[] = new Object[]{
+                category.getIdCategory(),
+                category.getNameCategory()
+            };
+            dtm.addRow(row);
+        }
+        this.TblRegistros.setModel(dtm);
+    }
+
+    private void filtro() {
+        trsFilter.setRowFilter(RowFilter.regexFilter(TfDato.getText(), 1));
+
+    }
 
     /**
      * Creates new form FrmCategory
      */
     public FrmCategory() {
         initComponents();
+
+        fillTable();
         contarRegistro();
-        filtro();
         TfID.setText("" + daoCategory.getLastCategory());
     }
 
@@ -47,7 +92,6 @@ public class FrmCategory extends javax.swing.JInternalFrame {
         jPanel3 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         TfDato = new javax.swing.JTextField();
-        BtnFiltrar = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         TblRegistros = new javax.swing.JTable();
 
@@ -180,10 +224,9 @@ public class FrmCategory extends javax.swing.JInternalFrame {
 
         jLabel3.setText("Buscar por nombre:");
 
-        BtnFiltrar.setText("Filtrar");
-        BtnFiltrar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                BtnFiltrarActionPerformed(evt);
+        TfDato.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                TfDatoKeyTyped(evt);
             }
         });
 
@@ -208,14 +251,12 @@ public class FrmCategory extends javax.swing.JInternalFrame {
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(29, 29, 29)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(TfDato, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(BtnFiltrar)))
+                        .addComponent(TfDato, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(22, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
@@ -224,11 +265,10 @@ public class FrmCategory extends javax.swing.JInternalFrame {
                 .addGap(20, 20, 20)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(TfDato, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(BtnFiltrar))
+                    .addComponent(TfDato, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(44, Short.MAX_VALUE))
+                .addContainerGap(45, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Registros Guardados", jPanel3);
@@ -256,17 +296,18 @@ public class FrmCategory extends javax.swing.JInternalFrame {
     private void limpiar() {
         TfID.setText("" + daoCategory.getLastCategory());
         TfName.setText(null);
+        TfDato.setText(null);
+        fillTable();
         contarRegistro();
         BtnGuardar.setEnabled(true);
         BtnEditar.setEnabled(false);
         BtnEliminar.setEnabled(false);
-        filtro();
         TfName.requestFocus();
     }
 
     private void contarRegistro() {
-        daoCategory.getAllCategories();
-        LblRegistros.setText("Registros guardados: " + daoCategory.getListCategory().size());
+
+        LblRegistros.setText("Registros guardados: " + list.size());
     }
 
     private void BtnLimpiarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnLimpiarActionPerformed
@@ -283,8 +324,9 @@ public class FrmCategory extends javax.swing.JInternalFrame {
             TfName.requestFocus();
             return;
         }
-        int resp = daoCategory.addCategory(TfName.getText());
-        if (resp == 1) {
+        category = new Category(0, TfName.getText());
+        boolean flag = daoCategory.addCategory(category);
+        if (flag) {
             JOptionPane.showMessageDialog(this, "Registro guardado...",
                     "Categoria", JOptionPane.INFORMATION_MESSAGE);
             limpiar();
@@ -307,9 +349,9 @@ public class FrmCategory extends javax.swing.JInternalFrame {
             TfName.requestFocus();
             return;
         }
-        int resp = daoCategory.updateCategories(TfName.getText(),
-                Integer.parseInt(TfID.getText()));
-        if (resp == 1) {
+        category = new Category(Integer.parseInt(TfID.getText()), TfName.getText());
+        boolean flag = daoCategory.updateCategories(category);
+        if (flag) {
             JOptionPane.showMessageDialog(this, "Registro Actualizado",
                     "Categoria", JOptionPane.INFORMATION_MESSAGE);
             limpiar();
@@ -324,8 +366,9 @@ public class FrmCategory extends javax.swing.JInternalFrame {
                 JOptionPane.YES_NO_OPTION);
 
         if (resp == 0) {
-            int flag = daoCategory.deleteCategories(Integer.parseInt(TfID.getText()));
-            if (flag == 1) {
+            category = new Category(Integer.parseInt(TfID.getText()), TfName.getText());
+            boolean flag = daoCategory.deleteCategories(category);
+            if (flag) {
                 JOptionPane.showMessageDialog(this,
                         "Registro eliminado", "Categoria",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -344,8 +387,8 @@ public class FrmCategory extends javax.swing.JInternalFrame {
     private void BtnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnBuscarActionPerformed
         // TODO add your handling code here:
         try {
-            daoCategory.getCategoriesByID(Integer.parseInt(TfID.getText()));
-            TfName.setText(daoCategory.getListCategory().get(0).getNameCategory());
+            category = daoCategory.getCategoriesByID(Integer.parseInt(TfID.getText()));
+            TfName.setText(category.getNameCategory());
             BtnGuardar.setEnabled(false);
             BtnEditar.setEnabled(true);
             BtnEliminar.setEnabled(true);
@@ -355,15 +398,6 @@ public class FrmCategory extends javax.swing.JInternalFrame {
         }
     }//GEN-LAST:event_BtnBuscarActionPerformed
 
-    private void filtro() {
-        String dato = "%" + TfDato.getText() + "%";
-        TblRegistros.setModel(daoCategory.getCategoriesByName(dato));
-    }
-
-    private void BtnFiltrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnFiltrarActionPerformed
-        // TODO add your handling code here:
-        filtro();
-    }//GEN-LAST:event_BtnFiltrarActionPerformed
 
     private void TblRegistrosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TblRegistrosMouseClicked
         // TODO add your handling code here:
@@ -376,6 +410,22 @@ public class FrmCategory extends javax.swing.JInternalFrame {
         this.jTabbedPane1.setSelectedIndex(0);
         TfName.requestFocus();
     }//GEN-LAST:event_TblRegistrosMouseClicked
+
+    private void TfDatoKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TfDatoKeyTyped
+        // TODO add your handling code here:
+        try {
+            TfDato.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyReleased(final KeyEvent e) {
+                    filtro();
+                }
+            });
+            trsFilter = new TableRowSorter(TblRegistros.getModel());
+            TblRegistros.setRowSorter(trsFilter);
+        } catch (Exception ex) {
+
+        }
+    }//GEN-LAST:event_TfDatoKeyTyped
 
     /**
      * @param args the command line arguments
@@ -416,7 +466,6 @@ public class FrmCategory extends javax.swing.JInternalFrame {
     private javax.swing.JButton BtnBuscar;
     private javax.swing.JButton BtnEditar;
     private javax.swing.JButton BtnEliminar;
-    private javax.swing.JButton BtnFiltrar;
     private javax.swing.JButton BtnGuardar;
     private javax.swing.JButton BtnLimpiar;
     private javax.swing.JLabel LblRegistros;

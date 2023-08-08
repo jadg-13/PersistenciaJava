@@ -7,16 +7,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Conexion {
-    private static final String SERVIDOR = "localhost";
-    private static final String USUARIO = "sa";
-    private static final String PW = "123";
-    private static final String NOMBREBD = "DBPruebaPOO";
-    private static final String PUERTO = "1433";
+    private static final String SERVIDOR = "jadgDB2023.mssql.somee.com";
+    private static final String USUARIO = "jadg13_SQLLogin_1";
+    private static final String PW = "27pdahshwc";
+    private static final String NOMBREBD = "jadgDB2023";
+    //private static final String PUERTO = "1433";
     private static final String DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     
     public Connection obtenerConexion(){
         try{
-            String conexionUrl = "jdbc:sqlserver://" + SERVIDOR +": " + PUERTO +
+            String conexionUrl = "jdbc:sqlserver://" + SERVIDOR +//": " + PUERTO +
                     "; Databasename= " + NOMBREBD +"; user= " + USUARIO + 
                     "; password = " + PW + ";";
             Class.forName(DRIVER);      

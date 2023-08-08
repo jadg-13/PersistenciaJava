@@ -9,194 +9,272 @@ import java.sql.PreparedStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.ResultSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.table.DefaultTableModel;
 import models.Category;
-
 
 /**
  *
  * @author jadg13
  */
 public class DaoCategory {
+
     Conexion conexion = new Conexion();
-    Connection conn ;
-    private ArrayList<Category> listCategory ;
-    private PreparedStatement selectAllCategory;
-    private PreparedStatement selectCategoryById;
-    private PreparedStatement selectCategoryByName;
-    private PreparedStatement selectLastCategory;
-    private PreparedStatement insertCategory;
-    private PreparedStatement updateCategory;
-    private PreparedStatement deleteCategory;
-    
-/**
- * Constructor de la clase DaoCategory
- * inicia las consultas
- */
+    Connection conn = null;
+    ResultSet rs = null;
+    private PreparedStatement ps = null;
+
+    /**
+     * Constructor de la clase DaoCategory inicia las consultas
+     */
     public DaoCategory() {
+
+    }
+
+    public void getRecords() {
+        conn = conexion.obtenerConexion();
+        String tSQL = "Select * from Categories";
         try {
-            conn = conexion.obtenerConexion();
-            selectAllCategory = conn.prepareStatement("SELECT Categories.* FROM Categories order by NameCategory");
-            selectCategoryById = conn.prepareStatement("SELECT Categories.* FROM Categories where IDCategory = ?");
-            selectCategoryByName = conn.prepareStatement("SELECT Categories.* FROM Categories where NameCategory like ? order by NameCategory");
-            selectLastCategory = conn.prepareStatement("select top 1 * from Categories order by IDCategory desc");
-            insertCategory = conn.prepareStatement("Insert into Categories(NameCategory) values(?)");
-            updateCategory = conn.prepareStatement("Update Categories set NameCategory = ? where IDCategory = ?");
-            deleteCategory = conn.prepareStatement("Delete from Categories where IDCategory = ?");
-            getAllCategories();
-        } catch (SQLException e) {
-            System.out.println("Error al instanciar la categoria: "+ e.getMessage());
+            ps = conn.prepareStatement(tSQL,
+                    ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_UPDATABLE,
+                    ResultSet.HOLD_CURSORS_OVER_COMMIT);
+            rs = ps.executeQuery();
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
-    
+
     /**
-     * Llena el campo listCategory de tipo arrayList con todos los registros de la
-     * tabla Categories
+     * Llena el campo listCategory de tipo arrayList con todos los registros de
+     * la tabla Categories
      */
-    public void getAllCategories(){
-        ResultSet rs = null;
-        listCategory = new ArrayList<>();
+    public ArrayList<Category> getAllCategories() {
+        ArrayList<Category> listCategory = new ArrayList<>();
         try {
-            rs = selectAllCategory.executeQuery();
-            
-            while(rs.next()){
-                listCategory.add(new Category(rs.getInt("IDCategory"), 
+            this.getRecords();
+            while (rs.next()) {    
+                listCategory.add(new Category(rs.getInt("IDCategory"),
                         rs.getString("NameCategory")));
             }
         } catch (SQLException e) {
             System.out.println("Error al obtener las Categorias");
-        }
-    }
-    
-    /**
-     * LLena una lista con el registro que tenga el id 
-     * ingresado por el usuario
-     * @param id 
-     */
-    public void getCategoriesByID(int id){
-        ResultSet rs = null;
-        listCategory = new ArrayList<>();
-        try {
-            selectCategoryById.setInt(1, id);
-            rs = selectCategoryById.executeQuery();
-            while(rs.next()){
-                listCategory.add(new Category(rs.getInt("IDCategory"), 
-                rs.getString("NameCategory")));
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (conn != null) {
+                    conexion.close(conn);
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
             }
-        } catch (SQLException e) {
-            System.out.println("Error al buscar el registro por el id: "+ id+ " el error fue: "+ e.getMessage());
         }
-    }
-    
-    /**
-     * Obtiene el ultimo registro almacenado y le suma 1
-     * @return 
-     */
-    public int getLastCategory(){
-        int id=0;
-        ResultSet rs = null;
-        try {
-            rs = selectLastCategory.executeQuery();
-            if(rs.next()) id = rs.getInt("IDCategory");
-        } catch (Exception e) {
-            System.out.println("Error al obtener el ultimo id: "+ e.getMessage());
-        }
-        return id+1;
-    }
-    
-    /**
-     * Obtiene una tabla filtrando por nombre 
-     * de categoria
-     * @param name
-     * @return 
-     */
-    public DefaultTableModel getCategoriesByName(String name){
-        DefaultTableModel tbl = new DefaultTableModel();
-        ResultSet rs = null;
-        String titulos[]={"CÓDIGO", "CATEGORÍA"};
-        tbl.setColumnIdentifiers(titulos);
-        try {
-            selectCategoryByName.setString(1, name);
-            rs = selectCategoryByName.executeQuery();
-            while(rs.next()){
-                Object datos[] = new Object[2];
-                datos[0] = rs.getInt("IDCategory");
-                datos[1] = rs.getString("NameCategory");
-                tbl.addRow(datos);
-            }
-        } catch (SQLException e) {
-            System.out.println("Error al buscar el registro por nombre: "+ name + " el error fue: "+ e.getMessage());
-        }
-        return tbl;
-    }
-    
-    
-//    Fue mi primera opcion y funciona pero encontre otra mejor 😍
-//    public JComboBox<Category> showCategoriesCombo(){
-//        JComboBox combo = new JComboBox<Category>();
-//        this.getAllCategories();
-//        for(Category category: this.listCategory){
-//            combo.addItem(category);
-//        }
-//        return combo;
-//    }
-    
-    /**
-     * Devuelve un ComboBox
-     * @return 
-     */
-    public DefaultComboBoxModel showCategoriesCombo(){
-        DefaultComboBoxModel<Category> combo = new DefaultComboBoxModel<>();
-        this.getAllCategories();
-        for(Category category: this.listCategory){
-            combo.addElement(category);
-        }
-        return combo;
-    }
-    
-    public int addCategory(String nameCategory){
-        int result =0;
-        try {
-            insertCategory.setString(1, nameCategory);
-            result = insertCategory.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Error al insertar categoria: "+e.getMessage());
-        }
-        return result;
-    }
-    
-    public int updateCategories(String nameCategory, int idCategory){
-        int result =0;
-        try {
-            updateCategory.setString(1, nameCategory);
-            updateCategory.setInt(2, idCategory);
-            result = updateCategory.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Error al actualizar categoria: "+ e.getMessage());
-        }
-        return result;
-    }
-    
-    public int deleteCategories(int idCategory){
-        int result = 0;
-        try {
-            deleteCategory.setInt(1, idCategory);
-            result = deleteCategory.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Error al eliminar categoria: "+ e.getMessage());
-        }
-        return result;
-    }
-   
-
-    public ArrayList<Category> getListCategory() {
         return listCategory;
     }
 
-    public void setListCategory(ArrayList<Category> listCategory) {
-        this.listCategory = listCategory;
+    public boolean isCategory(int id) {
+        boolean flag = false;
+        this.getRecords();
+        try {
+            rs.beforeFirst();
+
+            while (rs.next()) {
+                if (rs.getInt("IDCategory") == id) {
+                    flag = true;
+                    break;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al buscar el registro por el id: " + id + " el error fue: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (conn != null) {
+                    conexion.close(conn);
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        return flag;
     }
-    
-    
+
+    public Category getCategoriesByID(int id) {
+        Category category = new Category();
+        this.getRecords();
+        try {
+            rs.beforeFirst();
+
+            while (rs.next()) {
+                if (rs.getInt("IDCategory") == id) {
+                    category.setIdCategory(rs.getInt("IDCategory"));
+                    category.setNameCategory(rs.getString("NameCategory"));
+                    break;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al buscar el registro por el id: " + id + " el error fue: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (conn != null) {
+                    conexion.close(conn);
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        return category;
+    }
+
+    /**
+     * Obtiene el ultimo registro almacenado y le suma 1
+     *
+     * @return
+     */
+    public int getLastCategory() {
+        int id = 0;
+        this.getRecords();
+        try {
+            rs.afterLast();
+            if (rs.next()) {
+                id = rs.getInt("IDCategory");
+            }
+        } catch (Exception e) {
+            System.out.println("Error al obtener el ultimo id: " + e.getMessage());
+        }
+        return id + 1;
+    }
+
+    /**
+     * Devuelve un ComboBox
+     *
+     * @return
+     */
+    public DefaultComboBoxModel showCategoriesCombo() {
+        this.getRecords();
+        DefaultComboBoxModel<Category> combo = new DefaultComboBoxModel<>();
+        
+        try {
+            while (rs.next()) {
+                Category category = new Category(rs.getInt("IDCategory"),
+                        rs.getString("NameCategory"));
+                combo.addElement(category);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DaoCategory.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return combo;
+    }
+
+    public boolean addCategory(Category category) {
+        boolean flag = true;
+        this.getRecords();
+        try {
+            rs.moveToInsertRow();
+            rs.updateString("NameCategory", category.getNameCategory());
+            rs.insertRow();
+            rs.moveToCurrentRow();
+            flag = true;
+        } catch (SQLException e) {
+            System.out.println("Error al insertar categoria: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (conn != null) {
+                    conexion.close(conn);
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        return flag;
+    }
+
+    public boolean updateCategories(Category category) {
+        boolean flag = false;
+        try {
+            this.getRecords();
+            rs.beforeFirst();
+            while (rs.next()) {
+                if (rs.getInt("IDCategory") == category.getIdCategory()) {
+                    rs.updateString("NameCategory", category.getNameCategory());
+                    rs.updateRow();
+                    flag = true;
+                    break;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al actualizar categoria: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (conn != null) {
+                    conexion.close(conn);
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        return flag;
+    }
+
+    public boolean deleteCategories(Category category) {
+        boolean flag = false;
+        try {
+            this.getRecords();
+            rs.beforeFirst();
+            while (rs.next()) {
+                if (rs.getInt("IDCategory") == category.getIdCategory()) {
+                    rs.deleteRow();
+                    flag = true;
+                    break;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al eliminar categoria: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (conn != null) {
+                    conexion.close(conn);
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        return flag;
+    }
+
 }
