@@ -78,10 +78,10 @@ public class FrmProducts extends javax.swing.JInternalFrame {
         TfID = new javax.swing.JTextField();
         TfNameProduct = new javax.swing.JTextField();
         TfPrice = new javax.swing.JTextField();
-        CmbCategory = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
         TblRegistros = new javax.swing.JTable();
         DCDueDate = new com.toedter.calendar.JDateChooser();
+        CmbCategory = new javax.swing.JComboBox<>();
 
         setClosable(true);
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -193,9 +193,9 @@ public class FrmProducts extends javax.swing.JInternalFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(TfID, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(TfNameProduct)
-                            .addComponent(CmbCategory, 0, 313, Short.MAX_VALUE)
                             .addComponent(TfPrice)
-                            .addComponent(DCDueDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(DCDueDate, javax.swing.GroupLayout.DEFAULT_SIZE, 313, Short.MAX_VALUE)
+                            .addComponent(CmbCategory, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap(31, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(

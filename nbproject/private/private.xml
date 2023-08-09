@@ -12,8 +12,11 @@
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/C:/Users/jadg1/OneDrive/Documentos/NetBeansProjects/SistemaRegistros/src/controllers/DaoProducts.java</file>
             <file>file:/C:/Users/jadg1/OneDrive/Documentos/NetBeansProjects/SistemaRegistros/src/controllers/Conexion.java</file>
             <file>file:/C:/Users/jadg1/OneDrive/Documentos/NetBeansProjects/SistemaRegistros/src/controllers/DaoCategory.java</file>
+            <file>file:/C:/Users/jadg1/OneDrive/Documentos/NetBeansProjects/SistemaRegistros/src/models/Product.java</file>
+            <file>file:/C:/Users/jadg1/OneDrive/Documentos/NetBeansProjects/SistemaRegistros/src/views/FrmProducts.java</file>
             <file>file:/C:/Users/jadg1/OneDrive/Documentos/NetBeansProjects/SistemaRegistros/src/views/FrmCategory.java</file>
         </group>
     </open-files>
